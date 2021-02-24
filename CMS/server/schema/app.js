@@ -25,9 +25,10 @@ module.exports = buildSchema(`
         permission:[String!]
     }
 
+
     type RootQuery{
         users:[User!]
-        
+        roles:[Role!]
     }
 
     type RootMutation{
