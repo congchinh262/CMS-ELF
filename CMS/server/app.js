@@ -4,6 +4,7 @@ const { graphqlHTTP } = require("express-graphql");
 const appSchema = require("./schema/app");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const cors = require("cors");
 
 const app = express();
 app.use(bodyParser.json());
@@ -11,6 +12,8 @@ const User = require("./models/user");
 const Role = require("./models/role");
 const Permission = require("./models/permission");
 const permission = require("./models/permission");
+
+app.use(cors());
 
 app.use(
   "/graphql",
@@ -21,22 +24,22 @@ app.use(
         const users = await User.find();
         const userWithRoles = await Promise.all(
           users.map(async (user) => {
-            const role = (await Role.findById(user.role)).toObject();
-            console.log(user);
+            const role = await Role.findById(user.role);          
             return {
               ...user.toObject(),
               _id: user._id.toString(),
-              role,
+              role
             };
           })
         );
         return userWithRoles;
       },
-      role: async () => {
+      roles: async () => {
         try {
-          const roles = (await Role.find()).toObject();
-          console.log(roles);
-          return roles;
+          const roles = await Role.find();
+          return roles.map(role=>{
+            return {...role.toObject()}
+          })
         } catch (err) {
           throw err;
         }
@@ -67,14 +70,11 @@ app.use(
       createRole: async (args) => {
         try {
           const existedRole = await Role.findOne({ name: args.roleInput.name });
-          console.log(args.roleInput.permission);
           if (!existedRole) {
             const role = new Role({
               name: args.roleInput.name,
               permission: args.roleInput.permission,
             });
-            console.log("name: "+role.name);
-            console.log("permission: "+role.permission);
             const result = (await role.save()).toObject();
             return { ...result };
           } else {
@@ -115,7 +115,10 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(app.listen(3000))
+  .then( ()=>{
+    
+    app.listen(3000);
+  })
   .catch((err) => {
     throw err;
   });
