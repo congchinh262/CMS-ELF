@@ -101,13 +101,6 @@ function Homepage() {
   if (error) {
     return <div>Something goes wrong here :((</div>;
   }
-  function countUser() {
-    let count = 0;
-    data.users.map((user: IUser) => {
-      count++;
-    });
-    return count as string | number | undefined;
-  }
   return (
     <Router>
       <Layout>
@@ -135,6 +128,22 @@ const MainContainer = (props:ICointainerProps) => {
       }
     })
     return itemList;
+  }
+  if(loading){
+    return (
+      <div id="container">
+        <Space size="large">
+          <div className="spinload">
+            <Spin size="large" />
+          </div>
+        </Space>
+      </div>
+    )
+  }
+  if(error){
+    return (
+      <div>Something when wrong here :(</div>
+    )
   }
   return (
     <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>

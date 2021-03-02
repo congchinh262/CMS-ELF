@@ -45,6 +45,7 @@
     ]
   },
   "devDependencies": {
+    "@ant-design/icons": "^4.5.0",
     "@types/react-router-dom": "^5.1.7",
     "cross-env": "^7.0.3"
   }
