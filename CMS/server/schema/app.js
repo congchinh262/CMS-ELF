@@ -13,6 +13,11 @@ module.exports = buildSchema(`
         password:String!
         role:String!
     }
+    input UserUpdateInput{
+        _id:String!
+        name:String
+        role:String
+    }
 
     type Role{
         _id:ID
@@ -34,6 +39,8 @@ module.exports = buildSchema(`
     type RootMutation{
         createUser(userInput:UserInput):User
         createRole(roleInput:RoleInput):Role
+        updateUser(userUpdateInput:UserUpdateInput):User
+        deleteUser(userId:String!):Boolean
     }
     schema{
         query:RootQuery

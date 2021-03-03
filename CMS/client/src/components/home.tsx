@@ -193,7 +193,7 @@ const MainContainer = (props:ICointainerProps) => {
                 style={{ boxShadow: " 1px 1px 5px 1px rgba(50, 50, 50, 0.5)" }}
                 extra={<Link to="/users"><a>More</a></Link>}
               >
-                {limitData(1,props.data.users).map((user:IUser)=>{
+                {limitData(3,props.data.users).map((user:IUser)=>{
                   return(
                     <p>{user.name}</p>
                   )
@@ -207,7 +207,7 @@ const MainContainer = (props:ICointainerProps) => {
                 style={{ boxShadow: " 1px 1px 5px 1px rgba(50, 50, 50, 0.5)" }}
                 extra={<Link to="/roles"><a>More</a></Link>}
               >
-                {limitData(1,data.roles).map((role:IRole)=>{
+                {limitData(3,data.roles).map((role:IRole)=>{
                   return(
                     <p>{role.name}</p>
                   )
@@ -269,9 +269,7 @@ const SliderBar = () => {
       >
         <SubMenu key="sub1" icon={<UserOutlined />} title="subnav 1">
           <Menu.Item key="1">
-            <Route path="/users" exact component={User}>
               <Link to={"/users"}>Users</Link>
-            </Route>
           </Menu.Item>
           <Menu.Item key="2">
             <Link to={"/roles"}>Roles</Link>

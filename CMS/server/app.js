@@ -24,11 +24,11 @@ app.use(
         const users = await User.find();
         const userWithRoles = await Promise.all(
           users.map(async (user) => {
-            const role = await Role.findById(user.role);          
+            const role = await Role.findById(user.role);
             return {
               ...user.toObject(),
               _id: user._id.toString(),
-              role
+              role,
             };
           })
         );
@@ -37,9 +37,9 @@ app.use(
       roles: async () => {
         try {
           const roles = await Role.find();
-          return roles.map(role=>{
-            return {...role.toObject()}
-          })
+          return roles.map((role) => {
+            return { ...role.toObject() };
+          });
         } catch (err) {
           throw err;
         }
@@ -84,6 +84,43 @@ app.use(
           throw error;
         }
       },
+      updateUser: async (args) => {
+        try {
+          if (!args.userUpdateInput._id) {
+            throw new Error("Id not match!");
+          }
+          const filter = { _id: args.userUpdateInput._id };
+          const update = {
+            name: args.userUpdateInput.name,
+            password: args.userUpdateInput.password,
+            role: args.userUpdateInput.role,
+          };
+          for (var key in update) {
+            if (update[key] === undefined) {
+              delete update[key];
+            }
+          }
+          const user = await User.findOneAndUpdate(filter, update, {
+            new: true,
+          });
+          return { ...user.toObject() };
+        } catch (error) {
+          throw error;
+        }
+      },
+      deleteUser: (args) => {
+        console.log(args);
+        User.findByIdAndDelete(args.userId)
+          .then((result) => {
+            console.log("con tho");
+            return true;
+          })
+          .catch((error) => {
+            console.log("con go");
+            console.log(error);
+            return false;
+          });
+      },
       //#region cmt
       //   createPermission: async (args) => {
       //     try {
@@ -115,8 +152,7 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then( ()=>{
-    
+  .then(() => {
     app.listen(3000);
   })
   .catch((err) => {

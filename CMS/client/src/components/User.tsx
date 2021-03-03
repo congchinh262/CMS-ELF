@@ -36,26 +36,6 @@ const User: React.FC<IState> = () => {
   const [result, setResult] = useState<{}>();
   const tableData: any = [];
 
-  const handleSearch = (val: string) => {
-    // let item: keyof typeof Obj;
-    // //item is specific for properties in object
-    // for(item in Obj){
-    //     let result:any = Obj[item];
-    //     if(typeof(result)==="object"){
-    //         handleSearch(val,result);
-    //     };
-    //     if(val===result){
-    //         return setResult(Obj);
-    //     }
-    // }
-    const searchResult = data.users.filter((obj: any) => {
-      if (obj._id === val || obj.name === val || obj.role.name === val) {
-        return obj;
-      }
-    });
-    setResult(searchResult);
-  };
-
   const columns = [
     {
       title: "Id",
@@ -104,15 +84,6 @@ const User: React.FC<IState> = () => {
   });
   return (
     <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>
-      <AutoComplete
-        style={{ width: 200 }}
-        onSearch={handleSearch}
-        placeholder="input here"
-      >
-        {result.map((res:IState)=>{
-            
-        })}
-      </AutoComplete>
       <Table columns={columns} dataSource={tableData}></Table>
     </Layout>
   );
