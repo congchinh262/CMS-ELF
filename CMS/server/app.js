@@ -5,6 +5,7 @@ const appSchema = require("./schema/app");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 app.use(bodyParser.json());
@@ -12,8 +13,11 @@ const User = require("./models/user");
 const Role = require("./models/role");
 const Permission = require("./models/permission");
 const permission = require("./models/permission");
+const isAuth = require("./middlewares/isAuth");
 
 app.use(cors());
+
+app.use(isAuth);
 
 app.use(
   "/graphql",
@@ -24,7 +28,7 @@ app.use(
         const users = await User.find();
         const userWithRoles = await Promise.all(
           users.map(async (user) => {
-            const role = await Role.findById(user.role);
+            const role = (await Role.findById(user.role)).toObject();
             return {
               ...user.toObject(),
               _id: user._id.toString(),
@@ -44,11 +48,10 @@ app.use(
           throw err;
         }
       },
-      //   permission: async () => {
-      //     const permissions = await Permission.find();
-      //     return permissions;
-      //   },
-      createUser: async (args) => {
+      createUser: async (args,req) => {
+        if(!req.isAuth){
+          throw new Error("Unauthenticated!");
+        }
         try {
           const existedUser = await User.findOne({ name: args.userInput.name });
 
@@ -56,12 +59,15 @@ app.use(
             throw new Error("Username is already used!");
           }
           const hashedPW = await bcrypt.hash(args.userInput.password, 12);
+          
           const user = new User({
             name: args.userInput.name,
             password: hashedPW,
             role: args.userInput.role,
           });
+          
           const { password, ...result } = (await user.save()).toObject();
+          console.log(result);
           return { ...result, password: "" };
         } catch (error) {
           throw error;
@@ -111,7 +117,7 @@ app.use(
       deleteUser: (args) => {
         console.log(args);
         User.findByIdAndDelete(args.userId)
-          .then((result) => {
+          .then(() => {
             console.log("con tho");
             return true;
           })
@@ -120,6 +126,59 @@ app.use(
             console.log(error);
             return false;
           });
+      },
+      updateRole: async (args) => {
+        try {
+          if (!args.roleUpdateInput._id) {
+            throw new Error("Role id not match!");
+          }
+          const filter = { _id: args.roleUpdateInput._id };
+          const update = {
+            name: args.roleUpdateInput.name,
+            permission: args.roleUpdateInput.permission,
+          };
+          for (var key in update) {
+            if (update[key] === undefined) {
+              delete update[key];
+            }
+          }
+          const role = await Role.findOneAndUpdate(filter, update, {
+            new: true,
+          });
+          return { ...role.toObject() };
+        } catch (error) {
+          throw error;
+        }
+      },
+      deleteRole: async (args) => {
+        try {
+          const roleDeleted = await Role.find.findByIdAndDelete(
+            args.roleInput._id
+          );
+          return true;
+        } catch (error) {
+          return false;
+        }
+      },
+      login: async ({ userName, password }) => {
+        const existedUser = await User.findOne({ name: userName });
+        if (!existedUser) {
+          throw new Error("Username doesn't existed!");
+        }
+        const isEqual = await bcrypt.compare(password, existedUser.password);
+        if (!isEqual) {
+          throw new Error("Incorrect password!");
+        }
+        const token = jwt.sign(
+          { UserId: existedUser._id, email: existedUser.email },
+          "superultrahypermegasecret",
+          { expiresIn: "1h" }
+        );
+        return{
+          userId:existedUser._id,
+          token:token,
+          tokenExpiration:1
+        }
       },
       //#region cmt
       //   createPermission: async (args) => {

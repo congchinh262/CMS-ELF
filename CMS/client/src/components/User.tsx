@@ -1,6 +1,15 @@
 import React, { useState } from "react";
 import "../styles/user.css";
 import { useQuery, gql } from "@apollo/client";
+import UserEdit from "./UserEdit"
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  Redirect,
+} from "react-router-dom";
+
 import { Layout, Table, Tag, Space, AutoComplete } from "antd";
 
 interface IUser {
@@ -11,12 +20,12 @@ interface IUser {
   };
 }
 
-interface IProps {
-
+interface IUserEdit {
+  data:any;
 }
 
-interface IState{
-    result:string[];
+interface IState {
+  result: string[];
 }
 
 const GET_ALL_USERS = gql`
@@ -57,7 +66,7 @@ const User: React.FC<IState> = () => {
       key: "action",
       render: (text: any) => (
         <Space size="middle">
-          <a>Edit</a>
+          <Link to="/user-edit"><a>Edit</a></Link>
           <a>Delete</a>
         </Space>
       ),
@@ -72,7 +81,6 @@ const User: React.FC<IState> = () => {
   if (error) {
     return <div>Something when wrong here :(</div>;
   }
-  console.log(data);
   data.users.map((user: IUser) => {
     let keyCount = 0;
     return tableData.push({
@@ -83,9 +91,15 @@ const User: React.FC<IState> = () => {
     });
   });
   return (
-    <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>
-      <Table columns={columns} dataSource={tableData}></Table>
-    </Layout>
+    <Router>
+      <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>      
+        <Switch>
+          <Route path="/user-edit"><UserEdit data={data}/></Route>
+          <Route path="/users" ><Table columns={columns} dataSource={tableData}></Table></Route>
+          <Redirect to="/users" />
+        </Switch>
+      </Layout>
+    </Router>
   );
 };
 export default User;
