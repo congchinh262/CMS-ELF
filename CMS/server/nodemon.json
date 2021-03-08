@@ -1,5 +1,6 @@
 {
     "env": {
-        "MONGO_URI": "mongodb+srv://hinen:Chinh262@cluster0.mr2ox.mongodb.net/CMS?retryWrites=true&w=majority"
+        "MONGO_URI": "mongodb+srv://hinen:Chinh262@cluster0.mr2ox.mongodb.net/CMS?retryWrites=true&w=majority",
+        "SECRET_KEY":"superultrahypermegasecret"
     }
 }

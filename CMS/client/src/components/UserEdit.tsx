@@ -18,27 +18,18 @@ interface ISubmitFormProps {
 }
 
 const UPDATE_USER = gql`
-  mutation{
-  updateUser(userUpdateInput:{$_id:String!,$name:String,$role:String}){
-    updateuser(_id:$_id,name:$name,role:$role){
+  mutation($user: UserUpdateInput!) {
+    updateUser(userUpdateInput: $user) {
       name
-      role
+      role {
+        _id
+        name
+      }
     }
   }
-}
 `;
 
 const UserEdit = (props: IUserEditProps) => {
-  return (
-    <Layout style={{ padding: "0 24px 0 24px" }}>
-      <SubmitForm submitData={props.data}></SubmitForm>
-    </Layout>
-  );
-};
-
-export default UserEdit;
-
-const SubmitForm = (props: ISubmitFormProps) => {
   const [updateUser] = useMutation(UPDATE_USER);
   const layout = {
     labelCol: { span: 8 },
@@ -55,8 +46,8 @@ const SubmitForm = (props: ISubmitFormProps) => {
     },
   };
   const onFinish = (values: any) => {};
-  return props.submitData.map((user: IUser) => {
-    return (
+  return (
+    <Layout style={{ padding: "0 24px 0 24px" }}>
       <Form
         {...layout}
         name="nest-messages"
@@ -68,12 +59,12 @@ const SubmitForm = (props: ISubmitFormProps) => {
           label="Username"
           rules={[{ required: true }]}
         >
-          <Input defaultValue={user.name} />
+          <Input defaultValue={props.data.name} />
         </Form.Item>
         <Form.Item
           name={["user", "email"]}
           label="Role"
-          rules={[{ required:true }]}
+          rules={[{ required: true }]}
         >
           <Input />
         </Form.Item>
@@ -83,6 +74,10 @@ const SubmitForm = (props: ISubmitFormProps) => {
           </Button>
         </Form.Item>
       </Form>
-    );
-  });
+    </Layout>
+  );
 };
+
+export default UserEdit;
+
+const SubmitForm = (props: ISubmitFormProps) => {};

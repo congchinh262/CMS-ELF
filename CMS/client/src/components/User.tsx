@@ -20,13 +20,15 @@ interface IUser {
   };
 }
 
-interface IUserEdit {
-  data:any;
+interface IUserProps{
+  dataTable:[];
 }
 
 interface IState {
   result: string[];
 }
+
+
 
 const GET_ALL_USERS = gql`
   query {
@@ -40,11 +42,10 @@ const GET_ALL_USERS = gql`
   }
 `;
 
-const User: React.FC<IState> = () => {
+const User: React.FC<IUserProps> = (props:IUserProps) => {
   const { loading, error, data } = useQuery(GET_ALL_USERS);
   const [result, setResult] = useState<{}>();
   const tableData: any = [];
-
   const columns = [
     {
       title: "Id",
@@ -82,7 +83,7 @@ const User: React.FC<IState> = () => {
     return <div>Something when wrong here :(</div>;
   }
   data.users.map((user: IUser) => {
-    let keyCount = 0;
+    let keyCount = 0;    
     return tableData.push({
       key: keyCount++,
       id: user._id,

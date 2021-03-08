@@ -1,211 +1,52 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const { graphqlHTTP } = require("express-graphql");
-const appSchema = require("./schema/app");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const { ApolloServer, AuthenticationError } = require('apollo-server-express');
+
+const isAuth = require("./middlewares/isAuth");
+const User = require("./models/user");
 
 const app = express();
 app.use(bodyParser.json());
-const User = require("./models/user");
-const Role = require("./models/role");
-const Permission = require("./models/permission");
-const permission = require("./models/permission");
-const isAuth = require("./middlewares/isAuth");
+
+const appSchema = require("./schema/app");
+const resolver = require('./resolvers/resolvers-app');
 
 app.use(cors());
 
-app.use(isAuth);
+// app.use(isAuth);
 
-app.use(
-  "/graphql",
-  graphqlHTTP({
-    schema: appSchema,
-    rootValue: {
-      users: async () => {
-        const users = await User.find();
-        const userWithRoles = await Promise.all(
-          users.map(async (user) => {
-            const role = (await Role.findById(user.role)).toObject();
-            return {
-              ...user.toObject(),
-              _id: user._id.toString(),
-              role,
-            };
-          })
-        );
-        return userWithRoles;
-      },
-      roles: async () => {
-        try {
-          const roles = await Role.find();
-          return roles.map((role) => {
-            return { ...role.toObject() };
-          });
-        } catch (err) {
-          throw err;
-        }
-      },
-      createUser: async (args,req) => {
-        if(!req.isAuth){
-          throw new Error("Unauthenticated!");
-        }
-        try {
-          const existedUser = await User.findOne({ name: args.userInput.name });
+const typeDefs = appSchema;
 
-          if (existedUser) {
-            throw new Error("Username is already used!");
-          }
-          const hashedPW = await bcrypt.hash(args.userInput.password, 12);
-          
-          const user = new User({
-            name: args.userInput.name,
-            password: hashedPW,
-            role: args.userInput.role,
-          });
-          
-          const { password, ...result } = (await user.save()).toObject();
-          console.log(result);
-          return { ...result, password: "" };
-        } catch (error) {
-          throw error;
-        }
-      },
-      createRole: async (args) => {
-        try {
-          const existedRole = await Role.findOne({ name: args.roleInput.name });
-          if (!existedRole) {
-            const role = new Role({
-              name: args.roleInput.name,
-              permission: args.roleInput.permission,
-            });
-            const result = (await role.save()).toObject();
-            return { ...result };
-          } else {
-            throw new Error("Role existed!");
-          }
-        } catch (error) {
-          throw error;
-        }
-      },
-      updateUser: async (args) => {
-        try {
-          if (!args.userUpdateInput._id) {
-            throw new Error("Id not match!");
-          }
-          const filter = { _id: args.userUpdateInput._id };
-          const update = {
-            name: args.userUpdateInput.name,
-            password: args.userUpdateInput.password,
-            role: args.userUpdateInput.role,
-          };
-          for (var key in update) {
-            if (update[key] === undefined) {
-              delete update[key];
-            }
-          }
-          const user = await User.findOneAndUpdate(filter, update, {
-            new: true,
-          });
-          return { ...user.toObject() };
-        } catch (error) {
-          throw error;
-        }
-      },
-      deleteUser: (args) => {
-        console.log(args);
-        User.findByIdAndDelete(args.userId)
-          .then(() => {
-            console.log("con tho");
-            return true;
-          })
-          .catch((error) => {
-            console.log("con go");
-            console.log(error);
-            return false;
-          });
-      },
-      updateRole: async (args) => {
-        try {
-          if (!args.roleUpdateInput._id) {
-            throw new Error("Role id not match!");
-          }
-          const filter = { _id: args.roleUpdateInput._id };
-          const update = {
-            name: args.roleUpdateInput.name,
-            permission: args.roleUpdateInput.permission,
-          };
-          for (var key in update) {
-            if (update[key] === undefined) {
-              delete update[key];
-            }
-          }
-          const role = await Role.findOneAndUpdate(filter, update, {
-            new: true,
-          });
-          return { ...role.toObject() };
-        } catch (error) {
-          throw error;
-        }
-      },
-      deleteRole: async (args) => {
-        try {
-          const roleDeleted = await Role.find.findByIdAndDelete(
-            args.roleInput._id
-          );
-          return true;
-        } catch (error) {
-          return false;
-        }
-      },
-      login: async ({ userName, password }) => {
-        const existedUser = await User.findOne({ name: userName });
-        if (!existedUser) {
-          throw new Error("Username doesn't existed!");
-        }
-        const isEqual = await bcrypt.compare(password, existedUser.password);
-        if (!isEqual) {
-          throw new Error("Incorrect password!");
-        }
-        const token = jwt.sign(
-          { UserId: existedUser._id, email: existedUser.email },
-          "superultrahypermegasecret",
-          { expiresIn: "1h" }
-        );
-        return{
-          userId:existedUser._id,
-          token:token,
-          tokenExpiration:1
-        }
-      },
-      //#region cmt
-      //   createPermission: async (args) => {
-      //     try {
-      //       const existedPermission = await Permission.findOne({
-      //         name: args.permissionInput.name,
-      //       });
-      //       if (!existedPermission) {
-      //         const permission = new Permission({
-      //           name: args.permissionInput.name,
-      //           description: args.permissionInput.description,
-      //         });
-      //         const result = (await permission.save()).toObject();
-      //         return { ...result };
-      //       } else {
-      //         throw Error("Permission existed!");
-      //       }
-      //     } catch (error) {
-      //       throw error;
-      //     }
-      //   },
-      //#endregion
-    },
-    graphiql: true,
+const resolvers = resolver;
+
+const context = async()=>{
+  const users = await User.find();
+  return users.map((user)=>{
+    return {
+      user:{
+        _id:user._id,
+        role:user.role.name
+      }
+    }
   })
-);
+};
 
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({req})=>{
+    const token = req.headers.authorization || '';
+    const user = getUser(token);
+    if(!user) throw new AuthenticationError("You must be logged in!");
+    return {user};
+  }
+});
+server.applyMiddleware({ app });
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
