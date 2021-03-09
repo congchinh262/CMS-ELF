@@ -1,6 +1,13 @@
 const { gql } = require("apollo-server-express");
 
 module.exports = gql`
+  enum Permission{
+    READEALE
+    EDITABLE
+    DELETEABLE
+    ADDABLE
+  }
+
   type User {
     _id: ID!
     name: String!
@@ -43,9 +50,9 @@ module.exports = gql`
 
   type Query {
     users: [User!]
-    roles: [Role!]  
-    getSingleUser(userId:String!):User!
-    getSingleRole(roleId:String!):Role! 
+    roles: [Role!]
+    getSingleUser(userId: String!): User!
+    getSingleRole(roleId: String!): Role!
   }
 
   type Mutation {
@@ -55,7 +62,8 @@ module.exports = gql`
     deleteUser(userId: String!): Boolean
     updateRole(roleUpdateInput: RoleUpdateInput!): Role
     deleteRole(roleId: String!): Boolean
-    login(userName:String!, password:String!):AuthData
+    login(userName: String!, password: String!): AuthData
+    logout(token:String!):Boolean
   }
   schema {
     query: Query

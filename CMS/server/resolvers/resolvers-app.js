@@ -8,6 +8,9 @@ const Role = require("../models/role");
 
 const isAuth = require("../middlewares/isAuth");
 const GetUserWithRole = require("../helper/getUserWithRoleHelper");
+const { AuthenticationError } = require("apollo-server");
+
+
 
 module.exports = {
   Query: {
@@ -37,21 +40,21 @@ module.exports = {
     },
     getSingleUser: async (_, { userId }) => {
       try {
-        const user = await User.findById(userId);       
-        const userWithRole= GetUserWithRole(user);
+        const user = await User.findById(userId);
+        const userWithRole = GetUserWithRole(user);
         return userWithRole;
       } catch (error) {
         throw error;
       }
     },
-    getSingleRole: async (_,{roleId})=>{
-      try{
+    getSingleRole: async (_, { roleId }) => {
+      try {
         const role = (await Role.findById(roleId)).toObject();
         return role;
-      }catch(error){
+      } catch (error) {
         throw error;
       }
-    }
+    },
   },
   Mutation: {
     createUser: async (_, args) => {
@@ -76,7 +79,13 @@ module.exports = {
         throw error;
       }
     },
-    createRole: async (_, args) => {
+    createRole: async (_, args, isAuth) => {
+      if (!isAuth) {
+        throw new AuthenticationError("You must login!");
+      }
+      if(!isAuth.permission.includes("ADDABLE")){
+        throw new AuthenticationError("You dont have permission to do that!");
+      }
       try {
         const existedRole = await Role.findOne({ name: args.roleInput.name });
         if (!existedRole) {
@@ -93,7 +102,13 @@ module.exports = {
         throw error;
       }
     },
-    updateUser: async (_, args) => {
+    updateUser: async (_, args,isAuth) => {
+      if(!isAuth && isAuth.permission===undefined){
+        throw new AuthenticationError("You must logged in!");
+      }
+      if(!isAuth.permission.includes("EDITABLE")){
+        throw new AuthenticationError("You dont have permission to do this!")
+      }
       try {
         if (!args.userUpdateInput._id) {
           throw new Error("Id not match!");
@@ -117,20 +132,29 @@ module.exports = {
         throw error;
       }
     },
-    deleteUser: (_, args) => {
+    deleteUser: (_, args,isAuth) => {
+      if(!isAuth){
+        throw new AuthenticationError("You must logged in!");
+      }
+      if(!isAuth.permission.includes("DELETEABLE")){
+        throw new AuthenticationError("You dont have permission to do this!")
+      }
       console.log(args);
       User.findByIdAndDelete(args.userId)
         .then(() => {
-          console.log("con tho");
           return true;
         })
         .catch((error) => {
-          console.log("con go");
-          console.log(error);
           return false;
         });
     },
-    updateRole: async (_, args) => {
+    updateRole: async (_, args,isAuth) => {
+      if(!isAuth){
+        throw new AuthenticationError("You must logged in!");
+      }
+      if(!isAuth.permission.includes("EDITABLE")){
+        throw new AuthenticationError("You dont have permission to do this!")
+      }
       try {
         if (!args.roleUpdateInput._id) {
           throw new Error("Role id not match!");
@@ -153,9 +177,15 @@ module.exports = {
         throw error;
       }
     },
-    deleteRole: async (_, args) => {
+    deleteRole: async (_, args,isAuth) => {
+      if(!isAuth){
+        throw new AuthenticationError("You must logged in!");
+      }
+      if(!isAuth.permission.includes("DELETEABLE")){
+        throw new AuthenticationError("You dont have permission to do this!")
+      }
       try {
-        const roleDeleted = await Role.find.findByIdAndDelete(
+        const roleDeleted = await Role.findByIdAndDelete(
           args.roleInput._id
         );
         return true;
@@ -163,14 +193,36 @@ module.exports = {
         return false;
       }
     },
-    login: async (_, args) => {
-      console.log(args);
-      const user = User.find({ name: args.userName, password: args.password });
-      return jwt.sign(
-        { "http://localhost:3000/graphql": { roles, permissions } },
-        process.env.SECRET_KEY,
-        { algorithm: "HS256", subject: id, expiresIn: "1h" }
+    login: async (_, { userName, password }, isAuth) => {
+      if (!isAuth) {
+        return {
+          error: true,
+          message: "Auth failed!",
+        };
+      }
+      console.log(isAuth);
+      const user = await User.findOne({ name: userName });
+      if (!user) {
+        throw new Error("User doesn't exist!");
+      }
+      const isEqual = await bcrypt.compare(password, user.password);
+      if (!isEqual) {
+        throw new Error("Incorrect password!");
+      }
+      
+      const role  = await Role.findById(user.role);
+  
+      const permission = role.permission;
+      const token = jwt.sign(
+        { userId: user._id,  permission:permission},
+        "superultrahypermegasecret",
+        { algorithm: "HS256", expiresIn: "1h" }
       );
+      return {
+        userId: user._id,
+        token: token,
+        tokenExpiration: 1,
+      };
     },
   },
 };

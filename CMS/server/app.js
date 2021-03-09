@@ -16,6 +16,7 @@ app.use(bodyParser.json());
 const appSchema = require("./schema/app");
 const resolver = require('./resolvers/resolvers-app');
 
+
 app.use(cors());
 
 // app.use(isAuth);
@@ -24,28 +25,13 @@ const typeDefs = appSchema;
 
 const resolvers = resolver;
 
-const context = async()=>{
-  const users = await User.find();
-  return users.map((user)=>{
-    return {
-      user:{
-        _id:user._id,
-        role:user.role.name
-      }
-    }
-  })
-};
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: ({req})=>{
-    const token = req.headers.authorization || '';
-    const user = getUser(token);
-    if(!user) throw new AuthenticationError("You must be logged in!");
-    return {user};
-  }
+  context:isAuth
 });
+
 server.applyMiddleware({ app });
 mongoose
   .connect(process.env.MONGO_URI, {
