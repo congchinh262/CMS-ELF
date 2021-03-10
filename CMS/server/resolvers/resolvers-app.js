@@ -42,7 +42,9 @@ module.exports = {
       try {
         const user = await User.findById(userId);
         const userWithRole = GetUserWithRole(user);
-        return userWithRole;
+        const result = [];
+        result.push(userWithRole);
+        return result;
       } catch (error) {
         throw error;
       }

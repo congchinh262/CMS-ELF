@@ -10,7 +10,8 @@ import {
   Redirect,
 } from "react-router-dom";
 
-import { Layout, Table, Tag, Space, AutoComplete } from "antd";
+import { Layout, Table, Tag, Space, AutoComplete  } from "antd";
+
 
 interface IUser {
   _id: string;
@@ -42,6 +43,7 @@ const GET_ALL_USERS = gql`
   }
 `;
 
+
 const User: React.FC<IUserProps> = (props:IUserProps) => {
   const { loading, error, data } = useQuery(GET_ALL_USERS);
   const [result, setResult] = useState<{}>();
@@ -67,13 +69,12 @@ const User: React.FC<IUserProps> = (props:IUserProps) => {
       key: "action",
       render: (text: any) => (
         <Space size="middle">
-          <Link to="/user-edit"><a>Edit</a></Link>
+          <Link to={"/user-edit/"+data.users[0]._id}><a>Edit</a></Link>
           <a>Delete</a>
         </Space>
       ),
     },
   ];
-
   if (loading) {
     return (
       <Table columns={columns} dataSource={tableData} loading={true}></Table>
@@ -84,20 +85,22 @@ const User: React.FC<IUserProps> = (props:IUserProps) => {
   }
   data.users.map((user: IUser) => {
     let keyCount = 0;    
-    return tableData.push({
+    tableData.push({
       key: keyCount++,
       id: user._id,
       name: user.name,
       role: user.role.name,
     });
+    keyCount++;
+    return tableData;
   });
   return (
     <Router>
       <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>      
         <Switch>
-          <Route path="/user-edit"><UserEdit data={data}/></Route>
+          <Route path="/user-edit/:id"><UserEdit/></Route>
           <Route path="/users" ><Table columns={columns} dataSource={tableData}></Table></Route>
-          <Redirect to="/users" />
+          <Route path="/user-edit"><UserEdit/></Route>
         </Switch>
       </Layout>
     </Router>

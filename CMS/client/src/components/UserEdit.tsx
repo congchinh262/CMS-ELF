@@ -1,7 +1,8 @@
 import React from "react";
-import { Form, Input, Button, Radio, InputNumber } from "antd";
-import { gql, useMutation } from "@apollo/client";
+import { Form, Input, Button, Radio, InputNumber, Select } from "antd";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import Layout from "antd/lib/layout/layout";
+import { useParams } from "react-router";
 
 interface IUser {
   _id: string;
@@ -9,28 +10,50 @@ interface IUser {
   role: string;
 }
 
-interface IUserEditProps {
-  data: any;
-}
+interface IUserEditProps {}
 
 interface ISubmitFormProps {
   submitData: any;
 }
-
-const UPDATE_USER = gql`
-  mutation($user: UserUpdateInput!) {
-    updateUser(userUpdateInput: $user) {
+const GET_SINGLE_USER = gql`
+  query GetSingleUser($userId: String!) {
+    getSingleUser(userId: $userId) {
+      _id
       name
       role {
         _id
         name
+        permission
       }
     }
   }
 `;
 
-const UserEdit = (props: IUserEditProps) => {
+const UPDATE_USER = gql`
+   mutation($user: UserUpdateInput!) {
+    updateUser(userUpdateInput: $user) {
+      name
+      role {
+        _id
+      }
+    }
+  }
+`;
+
+const { Option } = Select;
+function handleChange(value: any) {
+  console.log(`selected ${value}`);
+}
+
+const UserEdit = (props: IUserEditProps, userId: string) => {
+  let { id } = useParams<{ id: string }>();
+  userId = id;
+  const { loading, error, data } = useQuery(GET_SINGLE_USER, {
+    variables: { userId: userId },
+  });
   const [updateUser] = useMutation(UPDATE_USER);
+  if (loading) return <div>loading...</div>;
+  if (error) return <div>Error! ${error}</div>;
   const layout = {
     labelCol: { span: 8 },
     wrapperCol: { span: 16 },
@@ -47,7 +70,7 @@ const UserEdit = (props: IUserEditProps) => {
   };
   const onFinish = (values: any) => {};
   return (
-    <Layout style={{ padding: "0 24px 0 24px" }}>
+    <Layout style={{ padding: "0 24px 0 24px", backgroundColor:"white" }}>
       <Form
         {...layout}
         name="nest-messages"
@@ -59,14 +82,35 @@ const UserEdit = (props: IUserEditProps) => {
           label="Username"
           rules={[{ required: true }]}
         >
-          <Input defaultValue={props.data.name} />
+          <Input
+            defaultValue={data.getSingleUser.map((user: any) => {
+              return user.name;
+            })}
+          />
         </Form.Item>
         <Form.Item
-          name={["user", "email"]}
+          name={["user", "role"]}
           label="Role"
           rules={[{ required: true }]}
         >
-          <Input />
+          <Select
+            defaultValue={data.getSingleUser.map((user: any) => {
+              return user.role.name;
+            })}
+            style={{ width: 120 }}
+            onChange={handleChange}
+          >
+            {data.getSingleUser.map((user: any) => {
+              const permissions = user.role.permission;
+              return (
+                <>
+                  {permissions.map((permission: string) => {
+                    return <Option value={permission}>{permission}</Option>;
+                  })}
+                </>
+              );
+            })}
+          </Select>
         </Form.Item>
         <Form.Item wrapperCol={{ ...layout.wrapperCol, offset: 8 }}>
           <Button type="primary" htmlType="submit">
@@ -79,5 +123,3 @@ const UserEdit = (props: IUserEditProps) => {
 };
 
 export default UserEdit;
-
-const SubmitForm = (props: ISubmitFormProps) => {};

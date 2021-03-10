@@ -51,8 +51,8 @@ module.exports = gql`
   type Query {
     users: [User!]
     roles: [Role!]
-    getSingleUser(userId: String!): User!
-    getSingleRole(roleId: String!): Role!
+    getSingleUser(userId: String!): [User!]
+    getSingleRole(roleId: String!): [Role!]
   }
 
   type Mutation {
