@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../styles/user.css";
 import { useQuery, gql } from "@apollo/client";
-import UserEdit from "./UserEdit"
+import UserEdit from "./UserEdit";
 import {
   BrowserRouter as Router,
   Switch,
@@ -10,8 +10,7 @@ import {
   Redirect,
 } from "react-router-dom";
 
-import { Layout, Table, Tag, Space, AutoComplete  } from "antd";
-
+import { Layout, Table, Tag, Space, AutoComplete } from "antd";
 
 interface IUser {
   _id: string;
@@ -21,15 +20,13 @@ interface IUser {
   };
 }
 
-interface IUserProps{
-  dataTable:[];
+interface IUserProps {
+  dataTable: [];
 }
 
 interface IState {
   result: string[];
 }
-
-
 
 const GET_ALL_USERS = gql`
   query {
@@ -43,8 +40,7 @@ const GET_ALL_USERS = gql`
   }
 `;
 
-
-const User: React.FC<IUserProps> = (props:IUserProps) => {
+const User: React.FC<IUserProps> = (props: IUserProps) => {
   const { loading, error, data } = useQuery(GET_ALL_USERS);
   const [result, setResult] = useState<{}>();
   const tableData: any = [];
@@ -66,10 +62,13 @@ const User: React.FC<IUserProps> = (props:IUserProps) => {
     },
     {
       title: "Action",
+      dataIndex:"id",
       key: "action",
-      render: (text: any) => (
+      render: (id:string) => (
         <Space size="middle">
-          <Link to={"/user-edit/"+data.users[0]._id}><a>Edit</a></Link>
+            <Link to={"/user-edit/" + id}>
+              <a>Edit</a>
+            </Link>
           <a>Delete</a>
         </Space>
       ),
@@ -83,24 +82,28 @@ const User: React.FC<IUserProps> = (props:IUserProps) => {
   if (error) {
     return <div>Something when wrong here :(</div>;
   }
+
   data.users.map((user: IUser) => {
-    let keyCount = 0;    
     tableData.push({
-      key: keyCount++,
       id: user._id,
       name: user.name,
       role: user.role.name,
     });
-    keyCount++;
     return tableData;
   });
   return (
     <Router>
-      <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>      
+      <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>
         <Switch>
-          <Route path="/user-edit/:id"><UserEdit/></Route>
-          <Route path="/users" ><Table columns={columns} dataSource={tableData}></Table></Route>
-          <Route path="/user-edit"><UserEdit/></Route>
+          <Route path="/user-edit/:id">
+            <UserEdit />
+          </Route>
+          <Route path="/users">
+            <Table columns={columns} dataSource={tableData}></Table>
+          </Route>
+          <Route path="/user-edit">
+            <UserEdit />
+          </Route>
         </Switch>
       </Layout>
     </Router>
