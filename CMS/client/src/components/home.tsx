@@ -19,6 +19,7 @@ import "../styles/home.css";
 
 import User from "./User";
 import Role from "./Role";
+import UserEdit from "./UserEdit";
 
 import {
   Layout,
@@ -51,14 +52,14 @@ interface IUser {
   role: string[];
 }
 
-interface IRole{
-  _id:string;
-  name:string;
-  permission:string[];
+interface IRole {
+  _id: string;
+  name: string;
+  permission: string[];
 }
 
-interface ICointainerProps{
-  data:any;
+interface ICointainerProps {
+  data: any;
 }
 
 //#region Schema
@@ -74,19 +75,19 @@ const GET_ALL_USERS = gql`
   }
 `;
 const GET_ALL_ROLES = gql`
-  query{
- 	roles{
-    _id
-    name
-    permission
+  query {
+    roles {
+      _id
+      name
+      permission
+    }
   }
-}
 `;
 //#endregion
 
 function Homepage() {
-  const { loading, error,data } = useQuery(GET_ALL_USERS);
-  
+  const { loading, error, data } = useQuery(GET_ALL_USERS);
+
   if (loading) {
     return (
       <div id="container">
@@ -101,36 +102,48 @@ function Homepage() {
   if (error) {
     return <div>Something goes wrong here :((</div>;
   }
-  
+
   return (
     <Router>
-      <Layout>
+      <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>
         <MainHeader />
         <Layout>
           <SliderBar />
           <Switch>
             <Route path="/roles" exact component={Role}></Route>
             <Route path="/users" exact component={User}></Route>
-            <Route path="/"><MainContainer data={data} /></Route>
+            <Route path="/user-edit/:id">
+              <UserEdit />
+            </Route>
+            <Route path="/user-edit">
+              <UserEdit />
+            </Route>
+            <Route>
+              
+            </Route>
+
+            <Route path="/">
+              <MainContainer data={data} />
+            </Route>
           </Switch>
         </Layout>
       </Layout>
     </Router>
   );
 }
-const MainContainer = (props:ICointainerProps) => {
-  const { loading, error,data } = useQuery(GET_ALL_ROLES);
-  const limitData = (numLimit:number,data:[])=>{
-    const itemList:[]=[];
-    data.map((item)=>{
-      if(numLimit > 0){
+const MainContainer = (props: ICointainerProps) => {
+  const { loading, error, data } = useQuery(GET_ALL_ROLES);
+  const limitData = (numLimit: number, data: []) => {
+    const itemList: [] = [];
+    data.map((item) => {
+      if (numLimit > 0) {
         numLimit--;
         itemList.push(item);
       }
-    })
+    });
     return itemList;
-  }
-  if(loading){
+  };
+  if (loading) {
     return (
       <div id="container">
         <Space size="large">
@@ -139,12 +152,10 @@ const MainContainer = (props:ICointainerProps) => {
           </div>
         </Space>
       </div>
-    )
+    );
   }
-  if(error){
-    return (
-      <div>Something when wrong here :(</div>
-    )
+  if (error) {
+    return <div>Something when wrong here :(</div>;
   }
   return (
     <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>
@@ -179,7 +190,7 @@ const MainContainer = (props:ICointainerProps) => {
                   title="Role"
                   value={data.roles.length}
                   valueStyle={{ color: "black" }}
-                />               
+                />
               </Card>
             </Col>
           </Row>
@@ -192,12 +203,14 @@ const MainContainer = (props:ICointainerProps) => {
                 title="Users"
                 bordered={false}
                 style={{ boxShadow: " 1px 1px 5px 1px rgba(50, 50, 50, 0.5)" }}
-                extra={<Link to="/users"><a>More</a></Link>}
+                extra={
+                  <Link to="/users">
+                    <a>More</a>
+                  </Link>
+                }
               >
-                {limitData(3,props.data.users).map((user:IUser)=>{
-                  return(
-                    <p>{user.name}</p>
-                  )
+                {limitData(3, props.data.users).map((user: IUser) => {
+                  return <p>{user.name}</p>;
                 })}
               </Card>
             </Col>
@@ -206,12 +219,14 @@ const MainContainer = (props:ICointainerProps) => {
                 title="Roles"
                 bordered={false}
                 style={{ boxShadow: " 1px 1px 5px 1px rgba(50, 50, 50, 0.5)" }}
-                extra={<Link to="/roles"><a>More</a></Link>}
+                extra={
+                  <Link to="/roles">
+                    <a>More</a>
+                  </Link>
+                }
               >
-                {limitData(3,data.roles).map((role:IRole)=>{
-                  return(
-                    <p>{role.name}</p>
-                  )
+                {limitData(3, data.roles).map((role: IRole) => {
+                  return <p>{role.name}</p>;
                 })}
               </Card>
             </Col>
@@ -270,7 +285,7 @@ const SliderBar = () => {
       >
         <SubMenu key="sub1" icon={<UserOutlined />} title="subnav 1">
           <Menu.Item key="1">
-              <Link to={"/users"}>Users</Link>
+            <Link to={"/users"}>Users</Link>
           </Menu.Item>
           <Menu.Item key="2">
             <Link to={"/roles"}>Roles</Link>

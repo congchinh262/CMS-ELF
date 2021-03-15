@@ -105,12 +105,12 @@ module.exports = {
       }
     },
     updateUser: async (_, args,isAuth) => {
-      if(!isAuth && isAuth.permission===undefined){
-        throw new AuthenticationError("You must logged in!");
-      }
-      if(!isAuth.permission.includes("EDITABLE")){
-        throw new AuthenticationError("You dont have permission to do this!")
-      }
+      // if(!isAuth && isAuth.permission===undefined){
+      //   throw new AuthenticationError("You must logged in!");
+      // }
+      // if(!isAuth.permission.includes("EDITABLE")){
+      //   throw new AuthenticationError("You dont have permission to do this!")
+      // }
       try {
         if (!args.userUpdateInput._id) {
           throw new Error("Id not match!");

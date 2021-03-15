@@ -9,7 +9,8 @@ import {
   Link,
   Redirect,
 } from "react-router-dom";
-
+import { Button, Radio } from "antd";
+import { UserAddOutlined } from "@ant-design/icons";
 import { Layout, Table, Tag, Space, AutoComplete } from "antd";
 
 interface IUser {
@@ -18,10 +19,6 @@ interface IUser {
   role: {
     name: string;
   };
-}
-
-interface IUserProps {
-  dataTable: [];
 }
 
 interface IState {
@@ -40,7 +37,7 @@ const GET_ALL_USERS = gql`
   }
 `;
 
-const User: React.FC<IUserProps> = (props: IUserProps) => {
+const User: React.FC = () => {
   const { loading, error, data } = useQuery(GET_ALL_USERS);
   const [result, setResult] = useState<{}>();
   const tableData: any = [];
@@ -62,14 +59,16 @@ const User: React.FC<IUserProps> = (props: IUserProps) => {
     },
     {
       title: "Action",
-      dataIndex:"id",
+      dataIndex: "id",
       key: "action",
-      render: (id:string) => (
+      render: (id: string) => (
         <Space size="middle">
-            <Link to={"/user-edit/" + id}>
-              <a>Edit</a>
-            </Link>
-          <a>Delete</a>
+          <Link to={"/user-edit/" + id}>
+            <a>Edit</a>
+          </Link>
+          <Link to={"/user-delete/" + id}>
+            <a>Delete</a>
+          </Link>
         </Space>
       ),
     },
@@ -92,21 +91,17 @@ const User: React.FC<IUserProps> = (props: IUserProps) => {
     return tableData;
   });
   return (
-    <Router>
+    <React.Fragment>
       <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>
-        <Switch>
-          <Route path="/user-edit/:id">
-            <UserEdit />
-          </Route>
-          <Route path="/users">
-            <Table columns={columns} dataSource={tableData}></Table>
-          </Route>
-          <Route path="/user-edit">
-            <UserEdit />
-          </Route>
-        </Switch>
+        <Link to="/create-user">
+          <Button type="primary" icon={<UserAddOutlined />} size="large">
+            New User
+          </Button>
+        </Link>
+        <Table columns={columns} dataSource={tableData}></Table>
       </Layout>
-    </Router>
+    </React.Fragment>
   );
 };
+
 export default User;

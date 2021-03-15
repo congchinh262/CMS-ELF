@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Form, Input, Button, Radio, InputNumber, Select } from "antd";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import Layout from "antd/lib/layout/layout";
 import { useParams } from "react-router";
+import { useState } from "react";
 
 interface IUser {
   _id: string;
@@ -26,13 +27,19 @@ const GET_SINGLE_USER = gql`
         permission
       }
     }
+    roles {
+      _id
+      name
+      permission
+    }
   }
 `;
 
 const UPDATE_USER = gql`
-   mutation($user: UserUpdateInput!) {
+  mutation($user: UserUpdateInput!) {
     updateUser(userUpdateInput: $user) {
       name
+      password
       role {
         _id
       }
@@ -41,9 +48,6 @@ const UPDATE_USER = gql`
 `;
 
 const { Option } = Select;
-function handleChange(value: any) {
-  console.log(`selected ${value}`);
-}
 
 const UserEdit = (props: IUserEditProps, userId: string) => {
   let { id } = useParams<{ id: string }>();
@@ -51,6 +55,10 @@ const UserEdit = (props: IUserEditProps, userId: string) => {
   const { loading, error, data } = useQuery(GET_SINGLE_USER, {
     variables: { userId: userId },
   });
+  const [usernameInput, setUsernameInput] = useState("");
+  const [userPwInput, setUserPwInput] = useState("");
+  const [userRoleInput, setUserRoleInput] = useState("");
+
   const [updateUser] = useMutation(UPDATE_USER);
   if (loading) return <div>loading...</div>;
   if (error) return <div>Error! ${error}</div>;
@@ -58,6 +66,7 @@ const UserEdit = (props: IUserEditProps, userId: string) => {
     labelCol: { span: 8 },
     wrapperCol: { span: 16 },
   };
+
   const validateMessages = {
     required: "${label} is required!",
     types: {
@@ -68,13 +77,35 @@ const UserEdit = (props: IUserEditProps, userId: string) => {
       range: "${label} must be between ${min} and ${max}",
     },
   };
-  const onFinish = (values: any) => {};
+
+  function handleChange(value: any) {
+    const roleWithName=data.roles.find((element:any) => element.name===value);
+    setUserRoleInput(roleWithName._id);
+  }
+  const onFinish = (e: any) => {
+    updateUser({
+      variables: {
+        user: {
+            _id: userId,
+            name: usernameInput,
+            role: userRoleInput,
+        },
+      },
+    });
+    console.log(userId+" "+usernameInput+" "+userRoleInput);
+  };
+
+  const onFinishFailed = (error: any) => {
+    console.log("Failed: " + error);
+  };
+
   return (
-    <Layout style={{ padding: "0 24px 0 24px", backgroundColor:"white" }}>
+    <Layout style={{ padding: "0 24px 0 24px", backgroundColor: "white" }}>
       <Form
         {...layout}
         name="nest-messages"
         onFinish={onFinish}
+        onFinishFailed={onFinishFailed}
         validateMessages={validateMessages}
       >
         <Form.Item
@@ -86,6 +117,7 @@ const UserEdit = (props: IUserEditProps, userId: string) => {
             defaultValue={data.getSingleUser.map((user: any) => {
               return user.name;
             })}
+            onChange={(e) => setUsernameInput(e.target.value)}
           />
         </Form.Item>
         <Form.Item
@@ -100,21 +132,14 @@ const UserEdit = (props: IUserEditProps, userId: string) => {
             style={{ width: 120 }}
             onChange={handleChange}
           >
-            {data.getSingleUser.map((user: any) => {
-              const permissions = user.role.permission;
-              return (
-                <>
-                  {permissions.map((permission: string) => {
-                    return <Option value={permission}>{permission}</Option>;
-                  })}
-                </>
-              );
+            {data.roles.map((role: any) => {
+              return <Option value={role.name}>{role.name}</Option>;
             })}
           </Select>
         </Form.Item>
         <Form.Item wrapperCol={{ ...layout.wrapperCol, offset: 8 }}>
           <Button type="primary" htmlType="submit">
-            Submit
+            Update
           </Button>
         </Form.Item>
       </Form>

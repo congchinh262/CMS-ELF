@@ -17,7 +17,6 @@ const GET_ALL_USERS = gql`
     }
   }
 `;
-//no chui t thi ua ok chua
 function App() {
     return (
       <Homepage></Homepage>
