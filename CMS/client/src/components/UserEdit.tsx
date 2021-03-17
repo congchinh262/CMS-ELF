@@ -4,6 +4,8 @@ import { gql, useMutation, useQuery } from "@apollo/client";
 import Layout from "antd/lib/layout/layout";
 import { useParams } from "react-router";
 import { useState } from "react";
+import { useHistory } from "react-router-dom";
+
 
 interface IUser {
   _id: string;
@@ -52,7 +54,9 @@ const { Option } = Select;
 const UserEdit = (props: IUserEditProps, userId: string) => {
   let { id } = useParams<{ id: string }>();
   userId = id;
-  const { loading, error, data } = useQuery(GET_SINGLE_USER, {
+  let history=useHistory();
+
+  const { loading, error, data,refetch} = useQuery(GET_SINGLE_USER, {
     variables: { userId: userId },
   });
   const [usernameInput, setUsernameInput] = useState("");
@@ -82,7 +86,7 @@ const UserEdit = (props: IUserEditProps, userId: string) => {
     const roleWithName=data.roles.find((element:any) => element.name===value);
     setUserRoleInput(roleWithName._id);
   }
-  const onFinish = (e: any) => {
+  const onFinish = async (e: any) => {
     updateUser({
       variables: {
         user: {
@@ -92,15 +96,21 @@ const UserEdit = (props: IUserEditProps, userId: string) => {
         },
       },
     });
-    console.log(userId+" "+usernameInput+" "+userRoleInput);
+    await refetch();
+    history.push("/users");
+    console.log("refectched!");
   };
 
   const onFinishFailed = (error: any) => {
+    refetch();
     console.log("Failed: " + error);
+    console.log("refected when fail");
   };
+
 
   return (
     <Layout style={{ padding: "0 24px 0 24px", backgroundColor: "white" }}>
+
       <Form
         {...layout}
         name="nest-messages"

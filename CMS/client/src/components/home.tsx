@@ -20,7 +20,8 @@ import "../styles/home.css";
 import User from "./User";
 import Role from "./Role";
 import UserEdit from "./UserEdit";
-
+import Login from "./Login";
+import { useHistory } from "react-router-dom";
 import {
   Layout,
   Menu,
@@ -87,7 +88,7 @@ const GET_ALL_ROLES = gql`
 
 function Homepage() {
   const { loading, error, data } = useQuery(GET_ALL_USERS);
-
+  
   if (loading) {
     return (
       <div id="container">
@@ -102,7 +103,7 @@ function Homepage() {
   if (error) {
     return <div>Something goes wrong here :((</div>;
   }
-
+ 
   return (
     <Router>
       <Layout style={{ padding: "0 24px 24px", backgroundColor: "white" }}>
@@ -118,10 +119,9 @@ function Homepage() {
             <Route path="/user-edit">
               <UserEdit />
             </Route>
-            <Route>
-              
+            <Route path="/login">
+              <Login></Login>
             </Route>
-
             <Route path="/">
               <MainContainer data={data} />
             </Route>
@@ -239,8 +239,12 @@ const MainContainer = (props: ICointainerProps) => {
 
 const MainHeader: React.FC = () => {
   const [current, setCurrent] = useState("");
+
+  const handleLogout=(e:any)=>{
+    localStorage.removeItem("token");
+    console.log("goback runned");
+  }
   const handleClick = (e: any) => {
-    console.log("click ", e);
     setCurrent(e.key);
   };
   return (
@@ -266,9 +270,21 @@ const MainHeader: React.FC = () => {
         </Menu.ItemGroup>
       </SubMenu>
       <Menu.Item key="alipay">
-        <a href="https://ant.design" target="_blank" rel="noopener noreferrer">
-          Navigation Four - Link
-        </a>
+        {!localStorage.getItem("token") ? (
+          <Link to="/login">
+            <a target="_blank" rel="noopener noreferrer">
+              Login
+            </a>
+          </Link>
+        ) : (
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleLogout}
+          >
+            Logout
+          </a>
+        )}
       </Menu.Item>
     </Menu>
   );

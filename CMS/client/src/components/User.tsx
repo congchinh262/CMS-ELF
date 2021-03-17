@@ -38,7 +38,7 @@ const GET_ALL_USERS = gql`
 `;
 
 const User: React.FC = () => {
-  const { loading, error, data } = useQuery(GET_ALL_USERS);
+  const { loading, error, data,refetch } = useQuery(GET_ALL_USERS);
   const [result, setResult] = useState<{}>();
   const tableData: any = [];
   const columns = [
@@ -64,7 +64,7 @@ const User: React.FC = () => {
       render: (id: string) => (
         <Space size="middle">
           <Link to={"/user-edit/" + id}>
-            <a>Edit</a>
+            <a onClick={()=>refetch()}>Edit</a>
           </Link>
           <Link to={"/user-delete/" + id}>
             <a>Delete</a>

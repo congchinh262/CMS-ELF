@@ -10,11 +10,11 @@ module.exports = ({req,res}) => {
   if (!header) return { isAuth: false };
   const token = header.split(" ");
   if (!token) return { isAuth: false };
-  console.log(token);
+ 
   try {
-    decodedToken = jwt.verify(token[0],"superultrahypermegasecret" );
+    decodedToken = jwt.verify(token[1],"superultrahypermegasecret" );
   } catch (error) {
-    return { isAuth: false };
+    return { isAuth: false,error:error };
   }
   if (!decodedToken) return { isAuth: false};
   

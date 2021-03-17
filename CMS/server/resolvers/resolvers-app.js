@@ -10,8 +10,6 @@ const isAuth = require("../middlewares/isAuth");
 const GetUserWithRole = require("../helper/getUserWithRoleHelper");
 const { AuthenticationError } = require("apollo-server");
 
-
-
 module.exports = {
   Query: {
     users: async () => {
@@ -85,7 +83,7 @@ module.exports = {
       if (!isAuth) {
         throw new AuthenticationError("You must login!");
       }
-      if(!isAuth.permission.includes("ADDABLE")){
+      if (!isAuth.permission.includes("ADDABLE")) {
         throw new AuthenticationError("You dont have permission to do that!");
       }
       try {
@@ -104,13 +102,14 @@ module.exports = {
         throw error;
       }
     },
-    updateUser: async (_, args,isAuth) => {
-      // if(!isAuth && isAuth.permission===undefined){
-      //   throw new AuthenticationError("You must logged in!");
-      // }
-      // if(!isAuth.permission.includes("EDITABLE")){
-      //   throw new AuthenticationError("You dont have permission to do this!")
-      // }
+    updateUser: async (_, args, isAuth) => {
+      if (!isAuth || isAuth.permission === undefined) {
+        throw new AuthenticationError("You must logged in!");
+      }
+
+      if (!isAuth.permission.includes("EDITABLE")) {
+        throw new AuthenticationError("You dont have permission to do this!");
+      }
       try {
         if (!args.userUpdateInput._id) {
           throw new Error("Id not match!");
@@ -134,12 +133,12 @@ module.exports = {
         throw error;
       }
     },
-    deleteUser: (_, args,isAuth) => {
-      if(!isAuth){
+    deleteUser: (_, args, isAuth) => {
+      if (!isAuth) {
         throw new AuthenticationError("You must logged in!");
       }
-      if(!isAuth.permission.includes("DELETEABLE")){
-        throw new AuthenticationError("You dont have permission to do this!")
+      if (!isAuth.permission.includes("DELETEABLE")) {
+        throw new AuthenticationError("You dont have permission to do this!");
       }
       console.log(args);
       User.findByIdAndDelete(args.userId)
@@ -150,12 +149,12 @@ module.exports = {
           return false;
         });
     },
-    updateRole: async (_, args,isAuth) => {
-      if(!isAuth){
+    updateRole: async (_, args, isAuth) => {
+      if (!isAuth) {
         throw new AuthenticationError("You must logged in!");
       }
-      if(!isAuth.permission.includes("EDITABLE")){
-        throw new AuthenticationError("You dont have permission to do this!")
+      if (!isAuth.permission.includes("EDITABLE")) {
+        throw new AuthenticationError("You dont have permission to do this!");
       }
       try {
         if (!args.roleUpdateInput._id) {
@@ -179,17 +178,15 @@ module.exports = {
         throw error;
       }
     },
-    deleteRole: async (_, args,isAuth) => {
-      if(!isAuth){
+    deleteRole: async (_, args, isAuth) => {
+      if (!isAuth) {
         throw new AuthenticationError("You must logged in!");
       }
-      if(!isAuth.permission.includes("DELETEABLE")){
-        throw new AuthenticationError("You dont have permission to do this!")
+      if (!isAuth.permission.includes("DELETEABLE")) {
+        throw new AuthenticationError("You dont have permission to do this!");
       }
       try {
-        const roleDeleted = await Role.findByIdAndDelete(
-          args.roleInput._id
-        );
+        const roleDeleted = await Role.findByIdAndDelete(args.roleInput._id);
         return true;
       } catch (error) {
         return false;
@@ -202,7 +199,6 @@ module.exports = {
           message: "Auth failed!",
         };
       }
-      console.log(isAuth);
       const user = await User.findOne({ name: userName });
       if (!user) {
         throw new Error("User doesn't exist!");
@@ -211,12 +207,12 @@ module.exports = {
       if (!isEqual) {
         throw new Error("Incorrect password!");
       }
-      
-      const role  = await Role.findById(user.role);
-  
+
+      const role = await Role.findById(user.role);
+
       const permission = role.permission;
       const token = jwt.sign(
-        { userId: user._id,  permission:permission},
+        { userId: user._id, permission: permission },
         "superultrahypermegasecret",
         { algorithm: "HS256", expiresIn: "1h" }
       );

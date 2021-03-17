@@ -63,7 +63,6 @@ module.exports = gql`
     updateRole(roleUpdateInput: RoleUpdateInput!): Role
     deleteRole(roleId: String!): Boolean
     login(userName: String!, password: String!): AuthData
-    logout(token:String!):Boolean
   }
   schema {
     query: Query
